@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { initDraw } from "@/draw";
 
-export function Canvas({
+export default function Canvas({
     roomId,
     socket
 }:{
@@ -17,6 +17,6 @@ export function Canvas({
     }, [canvasRef]);
 
      return <div>
-        <canvas ref={canvasRef} width={2000} height={1000}></canvas>
+        <canvas ref={canvasRef} width={700} height={720}></canvas>
     </div>
 }

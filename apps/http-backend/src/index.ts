@@ -105,6 +105,8 @@ try{
 })
 
 app.get("/chats/:roomId", async (req,res)=> {
+
+    try{
     const roomId = Number(req.params.roomId);
     const messages = await prismaClient.chat.findMany({
         where: {
@@ -115,6 +117,13 @@ app.get("/chats/:roomId", async (req,res)=> {
         },
         take: 50
     })
+     
+     res.json({ messages });
+}catch(err){
+
+        console.error("Error fetching chats:", err);
+        res.status(500).json({ error: "Internal server error" });
+}
 })
 
 app.get("/room/:slug", async (req,res)=> {

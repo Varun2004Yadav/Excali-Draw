@@ -23,7 +23,7 @@ app.post('/signup',async (req,res) => {
 try{
    const user = await prismaClient.user.create({
         data:{
-        email: parseData.data?.username,
+        email: parseData.data?.email,
         password: parseData.data.password,
         name: parseData.data.name,
         }
@@ -52,7 +52,7 @@ app.post('/signin', async (req, res) => {
 
     const user = await prismaClient.user.findFirst({
         where: {
-          email : parsedData.data.username,
+          email : parsedData.data.email,
           password: parsedData.data.password
         }
     })

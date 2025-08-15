@@ -40,7 +40,7 @@ export function AuthPage({ isSignin }: {
         localStorage.setItem("token", response.data.token);
         alert("You have signed in successfully!");
         // Redirect to canvas or dashboard
-        window.location.href = "/canvas/1"; // You might want to create a proper room first
+        window.location.href = "/dashboard"; // You might want to create a proper room first
       } else if (!isSignin) {
         alert("Signup successful! Please sign in.");
         // Redirect to signin page

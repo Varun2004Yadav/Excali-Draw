@@ -12,131 +12,196 @@ app.use(cors());
 
 
 app.post('/signup',async (req,res) => {
-
     const parseData = CreateUserSchema.safeParse(req.body);
     if(!parseData.success){
-        res.json({
+        res.status(400).json({
             message: "Incorrect Inputs"
-        })
+        });
         return;
     }
-try{
-   const user = await prismaClient.user.create({
-        data:{
-        email: parseData.data?.email,
-        password: parseData.data.password,
-        name: parseData.data.name,
-        }
-        
-    })
+    
+    try{
+        const user = await prismaClient.user.create({
+            data:{
+                email: parseData.data.email,
+                password: parseData.data.password,
+                name: parseData.data.name,
+            }
+        });
 
-    res.json({
-        userId: user.id
-    })
-}catch(e){
-    res.status(411).json({
-        message: "User already exist with this username and password"
-    })
-}
+        res.json({
+            userId: user.id
+        });
+    } catch(e: any) {
+        if (e.code === 'P2002') {
+            res.status(409).json({
+                message: "User already exists with this email"
+            });
+        } else {
+            console.error("Error creating user:", e);
+            res.status(500).json({
+                message: "Internal server error"
+            });
+        }
+    }
 })
 
 app.post('/signin', async (req, res) => {
-
     const parsedData = SigninSchema.safeParse(req.body);
     if(!parsedData.success){
-        res.json({
+        res.status(400).json({
             message: "Incorrect Inputs"
-        })
+        });
         return;
     }
 
-    const user = await prismaClient.user.findFirst({
-        where: {
-          email : parsedData.data.email,
-          password: parsedData.data.password
+    try {
+        const user = await prismaClient.user.findFirst({
+            where: {
+                email : parsedData.data.email,
+                password: parsedData.data.password
+            }
+        });
+
+        if(!user){
+            res.status(401).json({
+                message: "Invalid email or password"
+            });
+            return;
         }
-    })
 
-    if(!user){
-        res.status(403).json({
-            message: "Not Authorized"
-        })
-        return
+        const token = jwt.sign({
+            userId : user.id
+        }, JWT_SECRET); 
+        
+        res.json({
+            token
+        });
+    } catch (e) {
+        console.error("Error during signin:", e);
+        res.status(500).json({
+            message: "Internal server error"
+        });
     }
-
-    const token = jwt.sign({
-        userId : user?.id
-    },JWT_SECRET) 
-    
-    res.json({
-        token
-    })
 })
 
 //@ts-ignore
 app.post('/room',middleware, async (req,res) => {
-
-const parsedData = CreateRoomSchema.safeParse(req.body);
+    const parsedData = CreateRoomSchema.safeParse(req.body);
     if(!parsedData.success){
-        res.json({
+        res.status(400).json({
             message: "Incorrect Inputs"
-        })
+        });
         return;
     }
-//@ts-ignore
+    
+    console.log("Request body:", req.body);
+    //@ts-ignore
     const userId = req.userId;
-try{ 
-    const room = await prismaClient.room.create({
-        data: {
-            slug: parsedData.data.name,
-            adminId: userId
+    console.log("User ID:", userId);
+
+    try{ 
+        // Generate a slug from the room name
+        const slug = parsedData.data.name
+            .toLowerCase()
+            .replace(/[^a-z0-9]/g, '-')
+            .replace(/-+/g, '-')
+            .replace(/^-|-$/g, '');
+        
+        const room = await prismaClient.room.create({
+            data: {
+                slug: slug,
+                adminId: userId
+            }
+        });
+
+        res.json({
+            roomId: room.id,
+            slug: room.slug,
+            name: parsedData.data.name
+        });
+    } catch(e: any) {
+        if (e.code === 'P2002') {
+            res.status(409).json({
+                message: "Room already exists with this name"
+            });
+        } else {
+            console.error("Error creating room:", e);
+            res.status(500).json({
+                message: "Internal server error"
+            });
         }
-    })
-
-
-    res.json({
-        roomId: room.id
-    })
-}catch(e){
-    res.status(403).json({
-        message: "room Already exist with this  name"
-    })
-}
+    }
 })
 
 app.get("/chats/:roomId", async (req,res)=> {
+    try {
+        const roomSlug = req.params.roomId; // This is actually the room slug from frontend
+        
+        // First, find the room by slug to get the actual room ID
+        const room = await prismaClient.room.findUnique({
+            where: {
+                slug: roomSlug
+            }
+        });
 
-    try{
-    const roomId = Number(req.params.roomId);
-    const messages = await prismaClient.chat.findMany({
-        where: {
-            roomId: roomId
-        },
-        orderBy: {
-            id: "desc"
-        },
-        take: 50
-    })
+        if (!room) {
+            return res.status(404).json({ error: "Room not found" });
+        }
+
+        // Now fetch chats using the actual numeric room ID
+        const messages = await prismaClient.chat.findMany({
+            where: {
+                roomId: room.id
+            },
+            orderBy: {
+                id: "desc"
+            },
+            take: 50
+        });
      
-     res.json({ messages });
-}catch(err){
-
+        res.json({ messages });
+    } catch(err) {
         console.error("Error fetching chats:", err);
         res.status(500).json({ error: "Internal server error" });
-}
+    }
 })
 
 app.get("/room/:slug", async (req,res)=> {
-    const slug = Number(req.params.slug);
-    const room = await prismaClient.room.findFirst({
-        where: {
-            slug :String(slug)
+    try {
+        const slug = req.params.slug;
+        const room = await prismaClient.room.findUnique({
+            where: {
+                slug: slug
+            }
+        });
+        
+        if (!room) {
+            return res.status(404).json({ error: "Room not found" });
         }
-    })
-    res.json({
-        room
-    })
+        
+        res.json({
+            room
+        });
+    } catch (e) {
+        console.error("Error fetching room:", e);
+        res.status(500).json({ error: "Internal server error" });
+    }
 })
+
+app.get("/room", async (req, res) => {
+    try {
+        const rooms = await prismaClient.room.findMany({
+            orderBy: {
+                createdAt: 'desc'
+            }
+        });
+        res.json({ rooms });
+    } catch (e) {
+        console.error("Error fetching rooms:", e);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
 
 app.listen(3001, () => {
     console.log("Listening at port 3001");

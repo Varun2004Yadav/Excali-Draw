@@ -1,3 +1,4 @@
+require('dotenv').config({ path: require('path').resolve(process.cwd(), '.env') });
 import { WebSocketServer, WebSocket } from "ws"
 import  jwt, { JwtPayload } from "jsonwebtoken";
 import { JWT_SECRET } from "@repo/backend-common/config";
@@ -91,7 +92,7 @@ wss.on('connection' , function connection(ws,request){
             const message = parseData.message;
 
             // Validate required fields
-            if (!roomSlug || !message) {
+            if (!roomSlug || !message) {    
                 console.error("Missing required fields for chat message:", { roomSlug, message });
                 return;
             }

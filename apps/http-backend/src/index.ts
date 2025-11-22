@@ -1,3 +1,7 @@
+// Load environment variables BEFORE any other imports
+// Using require() ensures this executes synchronously before ES6 imports
+require('dotenv').config({ path: require('path').resolve(process.cwd(), '.env') });
+
 import express from "express"
 import jwt from "jsonwebtoken";
 import {JWT_SECRET} from "@repo/backend-common/config";
@@ -15,7 +19,8 @@ app.post('/signup',async (req,res) => {
     const parseData = CreateUserSchema.safeParse(req.body);
     if(!parseData.success){
         res.status(400).json({
-            message: "Incorrect Inputs"
+            message: "Incorrect Inputs",
+            errors: parseData.error.issues
         });
         return;
     }
@@ -50,7 +55,8 @@ app.post('/signin', async (req, res) => {
     const parsedData = SigninSchema.safeParse(req.body);
     if(!parsedData.success){
         res.status(400).json({
-            message: "Incorrect Inputs"
+            message: "Incorrect Inputs",
+            errors: parsedData.error.issues
         });
         return;
     }
@@ -136,7 +142,7 @@ app.post('/room',middleware, async (req,res) => {
 
 app.get("/chats/:roomId", async (req,res)=> {
     try {
-        const roomSlug = req.params.roomId; // This is actually the room slug from frontend
+        const roomSlug = req.params.roomId; 
         
         // First, find the room by slug to get the actual room ID
         const room = await prismaClient.room.findUnique({

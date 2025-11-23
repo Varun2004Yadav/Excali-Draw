@@ -27,7 +27,7 @@ export class Game {
     private canvas: HTMLCanvasElement;
     private ctx: CanvasRenderingContext2D;
     private existingShapes: Shape[];
-    private roomId: string;
+    private roomSlug: string;
     private clicked: boolean;
     private startX = 0;
     private startY = 0;
@@ -37,11 +37,11 @@ export class Game {
     socket: WebSocket;
 
 
-    constructor(canvas: HTMLCanvasElement, roomId: string, socket: WebSocket) {
+    constructor(canvas: HTMLCanvasElement, roomSlug: string, socket: WebSocket) {
         this.canvas = canvas;
         this.ctx = canvas.getContext("2d")!;
         this.existingShapes = [];
-        this.roomId = roomId;
+        this.roomSlug = roomSlug;
         this.socket = socket;
         this.clicked = false;
         this.init();
@@ -63,7 +63,7 @@ export class Game {
 
     async init() {
 
-        this.existingShapes = await getExistingShapes(this.roomId);
+        this.existingShapes = await getExistingShapes(this.roomSlug);
         this.clearCanvas();
 
     }
@@ -145,7 +145,7 @@ export class Game {
             message: JSON.stringify({
                 shape
             }),
-            roomId: this.roomId
+            roomSlug: this.roomSlug
         }))
     }
 

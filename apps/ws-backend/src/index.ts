@@ -4,7 +4,7 @@ import  jwt, { JwtPayload } from "jsonwebtoken";
 import { JWT_SECRET } from "@repo/backend-common/config";
 import { prismaClient } from "@repo/db/client";
 
-const wss = new WebSocketServer({port: 8080});
+const wss = new WebSocketServer({port: 8081});
 
 interface User{
     ws: WebSocket,
@@ -72,9 +72,9 @@ wss.on('connection' , function connection(ws,request){
 
         if(parseData.type === "join_room"){
             const user = users.find( x => x.ws === ws);
-            if (user && parseData.roomId) {
-                user.rooms.push(parseData.roomId);
-                console.log(`User ${userId} joined room: ${parseData.roomId}`);
+            if (user && parseData.roomSlug) {
+                user.rooms.push(parseData.roomSlug);
+                console.log(`User ${userId} joined room: ${parseData.roomSlug}`);
             }
         }
 
@@ -83,12 +83,12 @@ wss.on('connection' , function connection(ws,request){
             if(!user){
                 return;
             }
-            user.rooms = user.rooms.filter(x => x !== parseData.roomId);
-            console.log(`User ${userId} left room: ${parseData.roomId}`);
+            user.rooms = user.rooms.filter(x => x !== parseData.roomSlug);
+            console.log(`User ${userId} left room: ${parseData.roomSlug}`);
         }
 
         if(parseData.type === "chat"){
-            const roomSlug = parseData.roomId; // This is actually the room slug
+            const roomSlug = parseData.roomSlug; // Get roomSlug from the message
             const message = parseData.message;
 
             // Validate required fields

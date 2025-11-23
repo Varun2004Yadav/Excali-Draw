@@ -15,12 +15,12 @@ export default function RoomCanvas({ roomId }: { roomId: string }) {
             setSocket(ws);
             ws.send(JSON.stringify({
                 type: "join_room",
-                roomId:Number(roomId)
+                roomSlug: roomId
             }))
         }
 
         return () => ws.close();
-    }, [])
+    }, [roomId])
 
 
     if (!socket) {

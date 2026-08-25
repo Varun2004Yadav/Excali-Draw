@@ -1,4 +1,7 @@
-require('dotenv').config({ path: require('path').resolve(process.cwd(), '.env') });
+const dotenvPath = require('path').resolve(process.cwd(), '.env');
+const rootDotenvPath = require('path').resolve(process.cwd(), '../../.env');
+require('dotenv').config({ path: dotenvPath });
+require('dotenv').config({ path: rootDotenvPath });
 import { WebSocketServer, WebSocket } from "ws"
 import  jwt, { JwtPayload } from "jsonwebtoken";
 import { JWT_SECRET } from "@repo/backend-common/config";

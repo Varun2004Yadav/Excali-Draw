@@ -1,6 +1,9 @@
 // Load environment variables BEFORE any other imports
 // Using require() ensures this executes synchronously before ES6 imports
-require('dotenv').config({ path: require('path').resolve(process.cwd(), '.env') });
+const dotenvPath = require('path').resolve(process.cwd(), '.env');
+const rootDotenvPath = require('path').resolve(process.cwd(), '../../.env');
+require('dotenv').config({ path: dotenvPath });
+require('dotenv').config({ path: rootDotenvPath });
 
 import express from "express"
 import jwt from "jsonwebtoken";
